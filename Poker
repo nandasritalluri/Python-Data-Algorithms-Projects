@@ -1,0 +1,501 @@
+#  File: Poker.py
+
+import sys, random
+
+# This class creates a card object.
+class Card (object):
+  RANKS = (2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14)
+
+  SUITS = ('C', 'D', 'H', 'S')
+
+  # constructor
+  def __init__ (self, rank = 12, suit = 'S'):
+    if (rank in Card.RANKS):
+      self.rank = rank
+    else:
+      self.rank = 12
+
+    if (suit in Card.SUITS):
+      self.suit = suit
+    else:
+      self.suit = 'S'
+
+  # string representation of a Card object
+  def __str__ (self):
+    if (self.rank == 14):
+      rank = 'A'
+    elif (self.rank == 13):
+      rank = 'K'
+    elif (self.rank == 12):
+      rank = 'Q'
+    elif (self.rank == 11):
+      rank = 'J'
+    else:
+      rank = str (self.rank)
+    return rank + self.suit
+
+  # equality tests
+  def __eq__ (self, other):
+    return self.rank == other.rank
+
+  def __ne__ (self, other):
+    return self.rank != other.rank
+
+  def __lt__ (self, other):
+    return self.rank < other.rank
+
+  def __le__ (self, other):
+    return self.rank <= other.rank
+
+  def __gt__ (self, other):
+    return self.rank > other.rank
+
+  def __ge__ (self, other):
+    return self.rank >= other.rank
+
+class Deck (object):
+  # constructor
+  def __init__ (self, num_decks = 1):
+    self.deck = []
+    for i in range (num_decks):
+      for suit in Card.SUITS:
+        for rank in Card.RANKS:
+          card = Card (rank, suit)
+          self.deck.append (card)
+
+  # shuffle the deck
+  def shuffle (self):
+    random.shuffle (self.deck)
+
+  # deal a card
+  def deal (self):
+    if (len(self.deck) == 0):
+      return None
+    else:
+      return self.deck.pop(0)
+
+class Poker (object):
+  # constructor
+  def __init__ (self, num_players = 2, num_cards = 5):
+    self.deck = Deck()
+    self.deck.shuffle()
+    self.players_hands = []
+    self.numCards_in_Hand = num_cards
+
+    # deal the cards to the players
+    for i in range (num_players):
+      hand = []
+      for j in range (self.numCards_in_Hand):
+        hand.append (self.deck.deal())
+      self.players_hands.append (hand)
+
+  # simulate the play of poker
+  def play (self):
+    # sort the hands of each player and print
+    for i in range (len(self.players_hands)):
+      sorted_hand = sorted (self.players_hands[i], reverse = True)
+      self.players_hands[i] = sorted_hand
+      hand_str = ''
+      for card in sorted_hand:
+        hand_str = hand_str + str (card) + ' '
+      print ('Player ' + str(i + 1) + ' : ' + hand_str)
+    print("")
+
+    # determine the type of each hand and print
+    hand_type = []	# create a list to store type of hand
+    hand_points = []	# create a list to store points for hand
+    hand_typeandpoints = [] # create a list to store tuples linking the hands and the points
+      
+    # for loop to check through all the different types of hands
+    for i in range(len(self.players_hands)):
+      hand = self.players_hands[i]
+      type_of_hand = self.is_royal(hand)
+      if type_of_hand[0] == 0:
+        type_of_hand = self.is_straight_flush(hand)
+        if type_of_hand[0] == 0:
+          type_of_hand = self.is_four_kind(hand)
+          if type_of_hand[0] == 0:
+            type_of_hand = self.is_full_house(hand)
+            if type_of_hand[0] == 0:
+              type_of_hand = self.is_flush(hand)
+              if type_of_hand[0] == 0:
+                type_of_hand = self.is_straight(hand)
+                if type_of_hand[0] == 0:
+                  type_of_hand = self.is_three_kind(hand)
+                  if type_of_hand[0] == 0:
+                    type_of_hand = self.is_two_pair(hand)
+                    if type_of_hand[0] == 0:
+                      type_of_hand = self.is_one_pair(hand)
+                      if type_of_hand[0] == 0:
+                        type_of_hand = self.is_high_card(hand)
+      hand_type.append(type_of_hand[1])
+      hand_points.append(type_of_hand[0])
+      hand_typeandpoints.append(type_of_hand)
+    
+    player_and_hand_dict = {} # creates a dictionary to store the players' hands, points, and names
+      
+    #print the hands of all of the players
+    for i in range (len(self.players_hands)):
+      print ('Player ' + str(i + 1) + ': ' + hand_type[i])
+      player_and_hand_dict[i+1] = hand_typeandpoints[i]
+    print("")
+    
+    #find the max points and the winning hand
+    max_points = hand_points[0]
+    winning_hand = hand_typeandpoints[0][1]
+    for i in range(len(hand_points)):
+      if hand_points[i] > max_points:
+        max_points = hand_points[i]
+    for j in range(len(hand_typeandpoints)):
+      if max_points == hand_typeandpoints[j][0]:
+        winning_hand = hand_typeandpoints[j][1]
+      
+    # store a list of winning players
+    winning_players = []
+    for key in player_and_hand_dict.keys():
+      if player_and_hand_dict[key][1] == winning_hand:
+        winning_players.append(key)
+        
+    # sort the winning players by hand and by points
+    sorted_by_points = []
+    for key, value in player_and_hand_dict.items():
+      pts_then_player = tuple([value, key])
+      sorted_by_points.append(pts_then_player)
+    sorted_by_points = sorted(sorted_by_points, reverse = True)
+    
+    #rint(sorted_by_points)
+        
+    if len(winning_players) > 1:
+      for player in sorted_by_points:
+        if player[1] in winning_players:
+          print('Player ' + str(player[1]) + ' ties.')
+    elif(len(winning_players) == 1):
+      print('Player ' + str(winning_players[0]) + ' wins.')
+        
+        
+
+  # determine if a hand is a royal flush
+  # takes as argument a list of 5 Card objects
+  # returns a number (points) for that hand
+  def is_royal (self, hand):
+    same_suit = True
+    for i in range (len(hand) - 1):
+      same_suit = same_suit and (hand[i].suit == hand[i + 1].suit)
+
+    if (not same_suit):
+      return 0, ''
+
+    rank_order = True
+    for i in range (len(hand)):
+      rank_order = rank_order and (hand[i].rank == 14 - i)
+
+    if (not rank_order):
+      return 0, ''
+
+    points = 10 * 15 ** 5 + (hand[0].rank) * 15 ** 4 + (hand[1].rank) * 15 ** 3
+    points = points + (hand[2].rank) * 15 ** 2 + (hand[3].rank) * 15 ** 1
+    points = points + (hand[4].rank)
+
+    return points, 'Royal Flush'
+
+  # determine if a hand is a straight flush
+  # takes as argument a list of 5 Card objects
+  # returns a number (points) for that hand
+  def is_straight_flush (self, hand):
+    same_suit = True
+    for i in range (len(hand) - 1):
+      same_suit = same_suit and (hand[i].suit == hand[i + 1].suit)
+    
+    if (not same_suit):
+      return 0, ''
+    
+    list_of_ranks = []
+    for card in hand:
+      list_of_ranks.append(card.rank)
+    list_of_ranks = sorted(list_of_ranks, reverse=True)
+    #print(list_of_ranks)
+    
+    
+    rank_order = True
+    for i in range (len(list_of_ranks)-1):
+      rank_order = rank_order and (list_of_ranks[i+1] == list_of_ranks[i] - 1)
+
+    if (not rank_order):
+      return 0, ''
+    
+    points = 9 * 15 ** 5 + (list_of_ranks[0]) * 15 ** 4 + (list_of_ranks[1]) * 15 ** 3
+    points = points + (list_of_ranks[2]) * 15 ** 2 + (list_of_ranks[3]) * 15 ** 1
+    points = points + (list_of_ranks[4])
+    
+    return points, "Straight Flush"
+    
+  # determine if a hand is a four of a kind
+  # takes as argument a list of 5 Card objects
+  # returns a number (points) for that hand
+  def is_four_kind (self, hand):
+    list_of_ranks = []
+    for card in hand:
+      list_of_ranks.append(card.rank)
+    list_of_ranks = sorted(list_of_ranks, reverse=True)
+    if(list_of_ranks[0] == list_of_ranks[1] == list_of_ranks[2] == list_of_ranks[3]) or (list_of_ranks[1] == list_of_ranks[2] == list_of_ranks[3] == list_of_ranks[4]):
+      four_kind = "Four of a Kind"
+    else:
+      return 0, ''
+    
+    # labels the cards accordingly (c1 through c5) to the exception
+    if(list_of_ranks[0] == list_of_ranks[1] == list_of_ranks[2] == list_of_ranks[3]):
+      c_5 = list_of_ranks[4]
+      c_1 = list_of_ranks[0]
+      c_2 = list_of_ranks[0]
+      c_3 = list_of_ranks[0]
+      c_4 = list_of_ranks[0]
+    elif(list_of_ranks[1] == list_of_ranks[2] == list_of_ranks[3] == list_of_ranks[4]):
+      c_5 = list_of_ranks[0]
+      c_1 = list_of_ranks[1]
+      c_2 = list_of_ranks[1]
+      c_3 = list_of_ranks[1]
+      c_4 = list_of_ranks[1]
+    
+    
+    points = 8 * 15 ** 5 + (c_1) * 15 ** 4 + (c_2) * 15 ** 3
+    points = points + (c_3) * 15 ** 2 + (c_4) * 15 ** 1
+    points = points + (c_5)
+    
+    return points, four_kind
+
+  # determine if a hand is a full house
+  # takes as argument a list of 5 Card objects
+  # returns a number (points) for that hand
+  def is_full_house (self, hand):
+    list_of_ranks = []
+    for card in hand:
+      list_of_ranks.append(card.rank)
+    list_of_ranks = sorted(list_of_ranks, reverse=True)
+    if((list_of_ranks[0] == list_of_ranks[1] == list_of_ranks[2]) and (list_of_ranks[3] == list_of_ranks[4])) or ((list_of_ranks[4] == list_of_ranks[3] == list_of_ranks[2]) and (list_of_ranks[1] == list_of_ranks[0])):
+      full_house = "Full House"
+    else:
+      return 0, ''
+    
+    # labels the cards accordingly (c1 through c5) to the exception
+    if(list_of_ranks[0] == list_of_ranks[1] == list_of_ranks[2]):
+      c_1 = list_of_ranks[0]
+      c_2 = list_of_ranks[0]
+      c_3 = list_of_ranks[0]
+      c_4 = list_of_ranks[3]
+      c_5 = list_of_ranks[3]
+    elif(list_of_ranks[4] == list_of_ranks[3] == list_of_ranks[2]):
+      c_1 = list_of_ranks[3]
+      c_2 = list_of_ranks[3]
+      c_3 = list_of_ranks[3]
+      c_4 = list_of_ranks[0]
+      c_5 = list_of_ranks[0]
+    
+    
+    points = 7 * 15 ** 5 + (c_1) * 15 ** 4 + (c_2) * 15 ** 3
+    points = points + (c_3) * 15 ** 2 + (c_4) * 15 ** 1
+    points = points + (c_5)
+    
+    return points, full_house
+
+  # determine if a hand is a flush
+  # takes as argument a list of 5 Card objects
+  # returns a number (points) for that hand
+  def is_flush (self, hand):
+    same_suit = True
+    for i in range (len(hand) - 1):
+      same_suit = same_suit and (hand[i].suit == hand[i + 1].suit)
+
+    if (not same_suit):
+      return 0, ''
+    
+    points = 6 * 15 ** 5 + (hand[0].rank) * 15 ** 4 + (hand[1].rank) * 15 ** 3
+    points = points + (hand[2].rank) * 15 ** 2 + (hand[3].rank) * 15 ** 1
+    points = points + (hand[4].rank)
+    
+    return points, 'Flush'
+
+  # determine if a hand is a straight
+  # takes as argument a list of 5 Card objects
+  # returns a number (points) for that hand
+  def is_straight (self, hand):
+    same_suit = True
+    for i in range (len(hand) - 1):
+      same_suit = same_suit and (hand[i].suit == hand[i + 1].suit)
+    if (not same_suit):
+      list_of_ranks = []
+      for card in hand:
+        list_of_ranks.append(card.rank)
+      list_of_ranks = sorted(list_of_ranks, reverse=True)
+    #print(list_of_ranks)
+    
+    
+      rank_order = True
+      for i in range (len(list_of_ranks)-1):
+        rank_order = rank_order and (list_of_ranks[i+1] == list_of_ranks[i] - 1)
+
+      if (not rank_order):
+        return 0, ''
+    
+      points = 5 * 15 ** 5 + (list_of_ranks[0]) * 15 ** 4 + (list_of_ranks[1]) * 15 ** 3
+      points = points + (list_of_ranks[2]) * 15 ** 2 + (list_of_ranks[3]) * 15 ** 1
+      points = points + (list_of_ranks[4])
+    
+      return points, "Straight"
+
+  # determine if a hand is a three of a kind
+  # takes as argument a list of 5 Card objects
+  # returns a number (points) for that hand
+  def is_three_kind (self, hand):
+    list_of_ranks = []
+    for card in hand:
+      list_of_ranks.append(card.rank)
+    list_of_ranks = sorted(list_of_ranks, reverse=True)
+    if((list_of_ranks[0] == list_of_ranks[1] == list_of_ranks[2]) and (list_of_ranks[3] != list_of_ranks[4])) or ((list_of_ranks[4] == list_of_ranks[3] == list_of_ranks[2]) and (list_of_ranks[1] != list_of_ranks[0])) or ((list_of_ranks[1] == list_of_ranks[2] == list_of_ranks[3]) and (list_of_ranks[0] != list_of_ranks[4])):
+      three_kind = "Three of a Kind"
+    else:
+      return 0, ''
+
+    # labels the cards accordingly (c1 through c5) to the exception 
+    if(list_of_ranks[0] == list_of_ranks[1] == list_of_ranks[2]):
+      c_1 = list_of_ranks[0]
+      c_2 = list_of_ranks[0]
+      c_3 = list_of_ranks[0]
+      if(list_of_ranks[3] < list_of_ranks[4]):
+        c_4 = list_of_ranks[4]
+        c_5 = list_of_ranks[3]
+      elif(list_of_ranks[3] > list_of_ranks[4]):
+        c_4 = list_of_ranks[3]
+        c_5 = list_of_ranks[4]
+    elif(list_of_ranks[4] == list_of_ranks[3] == list_of_ranks[2]):
+      c_1 = list_of_ranks[3]
+      c_2 = list_of_ranks[3]
+      c_3 = list_of_ranks[3]
+      if(list_of_ranks[0] < list_of_ranks[1]):
+        c_4 = list_of_ranks[1]
+        c_5 = list_of_ranks[0]
+      elif(list_of_ranks[0] > list_of_ranks[1]):
+        c_4 = list_of_ranks[0]
+        c_5 = list_of_ranks[1]
+    elif(list_of_ranks[1] == list_of_ranks[2] == list_of_ranks[3]):
+      c_1 = list_of_ranks[1]
+      c_2 = list_of_ranks[1]
+      c_3 = list_of_ranks[1]
+      if(list_of_ranks[0] < list_of_ranks[4]):
+        c_4 = list_of_ranks[4]
+        c_5 = list_of_ranks[0]
+      elif(list_of_ranks[0] > list_of_ranks[4]):
+        c_4 = list_of_ranks[0]
+        c_5 = list_of_ranks[4]
+    
+    
+    points = 4 * 15 ** 5 + (c_1) * 15 ** 4 + (c_2) * 15 ** 3
+    points = points + (c_3) * 15 ** 2 + (c_4) * 15 ** 1
+    points = points + (c_5)
+    
+    return points, three_kind
+
+  # determine if a hand is a two pair
+  # takes as argument a list of 5 Card objects
+  # returns a number (points) for that hand
+  def is_two_pair (self, hand):
+    list_of_ranks = []
+    for card in hand:
+      list_of_ranks.append(card.rank)
+    list_of_ranks = sorted(list_of_ranks, reverse=True)
+    if((list_of_ranks[0] == list_of_ranks[1]) and (list_of_ranks[2] == list_of_ranks[3])) or ((list_of_ranks[1] == list_of_ranks[2]) and (list_of_ranks[3] == list_of_ranks[4])) or ((list_of_ranks[0] == list_of_ranks[1]) and (list_of_ranks[3] == list_of_ranks[4])):
+      two_pair = "Two Pair"
+    else:
+      return 0, ''
+    
+    # labels the cards accordingly (c1 through c5) to the exception
+    if((list_of_ranks[0] == list_of_ranks[1]) and (list_of_ranks[2] == list_of_ranks[3])):
+      c_1 = list_of_ranks[0]
+      c_2 = list_of_ranks[0]
+      c_3 = list_of_ranks[2]
+      c_4 = list_of_ranks[2]
+      c_5 = list_of_ranks[4]
+    elif(list_of_ranks[1] == list_of_ranks[2]) and (list_of_ranks[3] == list_of_ranks[4]):
+      c_1 = list_of_ranks[1]
+      c_2 = list_of_ranks[1]
+      c_3 = list_of_ranks[3]
+      c_4 = list_of_ranks[3]
+      c_5 = list_of_ranks[2]
+    elif(list_of_ranks[0] == list_of_ranks[1]) and (list_of_ranks[3] == list_of_ranks[4]):
+      c_1 = list_of_ranks[0]
+      c_2 = list_of_ranks[0]
+      c_3 = list_of_ranks[3]
+      c_4 = list_of_ranks[3]
+      c_5 = list_of_ranks[2]
+    
+    
+    points = 3 * 15 ** 5 + (c_1) * 15 ** 4 + (c_2) * 15 ** 3
+    points = points + (c_3) * 15 ** 2 + (c_4) * 15 ** 1
+    points = points + (c_5)
+    
+    return points, two_pair
+
+  # determine if a hand is one pair
+  # takes as argument a list of 5 Card objects
+  # returns the number of points for that hand
+  def is_one_pair (self, hand):
+    list_of_ranks = []
+    one_pair = False
+    for card in hand:
+      list_of_ranks.append(card.rank)
+    list_of_ranks = sorted(list_of_ranks, reverse=True)
+    for i in range(len(list_of_ranks) - 1):
+      if(list_of_ranks[i] == list_of_ranks[i+1]):
+        list_of_ranks.insert(0,list_of_ranks.pop(i))
+        list_of_ranks.insert(1,list_of_ranks.pop(i+1))
+        one_pair = True
+        break
+    if (not one_pair):
+      return 0, ''
+
+    points = 2 * 15 ** 5 + (list_of_ranks[0]) * 15 ** 4 + (list_of_ranks[1]) * 15 ** 3
+    points = points + (list_of_ranks[2]) * 15 ** 2 + (list_of_ranks[3]) * 15 ** 1
+    points = points + (list_of_ranks[4])
+
+    return points, 'One Pair'
+
+  # determine if a hand is a high card
+  # takes as argument a list of 5 Card objects
+  # returns a number (points) for that hand
+  def is_high_card (self,hand):
+    list_of_ranks = []
+    for card in hand:
+      list_of_ranks.append(card.rank)
+    list_of_ranks = sorted(list_of_ranks, reverse=True)
+    
+    points = 1 * 15 ** 5 + (list_of_ranks[0]) * 15 ** 4 + (list_of_ranks[1]) * 15 ** 3
+    points = points + (list_of_ranks[2]) * 15 ** 2 + (list_of_ranks[3]) * 15 ** 1
+    points = points + (list_of_ranks[4])
+
+    return points, 'High Card'
+    
+def main():
+  # read number of players from stdin
+  line = sys.stdin.readline()
+  line = line.strip()
+  num_players = int (line)
+  if (num_players < 2) or (num_players > 6):
+    return
+  
+
+  # create the Poker object
+  game = Poker (num_players)
+
+  # play the game
+  game.play()
+  #card_1 = Card(4, "D")
+  #card_2 = Card(4, "H")
+  #card_3 = Card(7, "S")
+  #card_4 = Card(7, "C")
+  #card_5 = Card(9, "S")
+  #hand = [card_1, card_2, card_3, card_4, card_5]
+  #print("")
+  #for player in range(1, num_players+1, 1):
+  #  print("Player " + str(player) + ": " + str(game.is_high_card(hand)))
+
+if __name__ == "__main__":
+  main()
