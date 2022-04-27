@@ -1,0 +1,136 @@
+# Python-Data-Algorithms-Projects
+
+#  File: WordSearch.py
+
+#  Description: This project searches for words in a word search.
+#  It searches upwards, downwards, left, right, and both directions diagonally.
+
+import sys
+#the first def read_input is for running in IDLE, the second is for sys
+#def read_input():
+    # open file for reading
+    #in_file = open('word_grid.in.txt', 'r')
+    # read m and n
+    #coords = in_file.readline().strip().split()
+    #num_of_rows = int(coords[0])
+    #in_file.readline()
+    #word_grid = []
+    #for _ in range(num_of_rows):
+    #    word_grid.append(list(in_file.readline().rstrip().split()))
+    #in_file.readline()
+    #k = int(in_file.readline().strip())
+    #word_list = []
+    #for _ in range(k):
+    #    word_list_item = in_file.readline().strip()
+    #    word_list.append(word_list_item)
+    #in_file.close
+
+    #return word_grid, word_list
+    
+def read_input():
+    num_of_rows = int(input())
+    input()
+    word_grid = []
+    for i in range(num_of_rows):
+        word_grid.append(input().strip().replace(" ", ""))
+    input()
+    word_count = int(input())
+    word_list = []
+    for i in range(word_count):
+        word_list.append(input().strip())
+    return word_grid, word_list
+
+def main():
+    # read input from file
+    word_grid, word_list = read_input()
+    
+    
+    #### do NOT change anything above this line ####
+    #### make changes in this section only      ####
+
+    # call word_search() using the word_grid and word_list parameters
+    for word in word_list:
+        word_coordinates = word_search(word_grid, word)
+        if str(word_coordinates) == "None":
+          print(str(word) + ": (0, 0)")
+        else:
+          print(str(word) + ": " + str(word_coordinates))
+    
+
+#  Input: word_grid is a 2-D list of characters
+#         word_to_search is a SINGLE word to look for in the word_grid
+#  Output: function RETURNS a TUPLE representing the
+#          indices (row, col) of the first letter of the word_to_search
+#          if word does not exist, return (-1, -1)
+
+def word_search (word_grid, word_to_search):
+    #take the first horizontal line and make it into a string
+    #search horizontally
+    for i in range(len(word_grid)):
+        row_str = ""
+        for char in word_grid[i]:
+            row_str+=char
+        if word_to_search in row_str:
+            return (i+1, (row_str.find(word_to_search) + 1))
+        if word_to_search in row_str[::-1]:
+            return (i+1, len(word_grid)-(row_str[::-1].find(word_to_search)))
+    #search vertically
+    for i in range (len(word_grid)):
+        col_str = ""
+        for j in range (len(word_grid)):
+            col_str+=word_grid[j][i]
+        if word_to_search in col_str:
+            return (col_str.find(word_to_search)+1, i+1)
+        if word_to_search in col_str[::-1]:
+            return (len(word_grid)-(col_str[::-1].find(word_to_search)), i+1)
+    #search diagonally top right to bottom left
+    n = len(word_grid)
+    l = [x for x in range(1, n+1)] + [x for x in range(n-1, 0, -1)]
+    s = [0, -1]
+    for i in range(len(l)):
+        if s[1] < len(word_grid) -1:
+            s[1] += 1
+        else:
+            s[0] += 1
+        diag_str = ""
+        temp = s.copy()
+        for x in range(l[i]):
+            diag_str += str(word_grid[temp[0]][temp[1]])
+            temp[0] += 1
+            temp[1] -= 1
+        if word_to_search in diag_str:
+            loc = diag_str.find(word_to_search)
+            return (s[0] + loc + 1, s[1] - loc + 1)
+        if word_to_search in diag_str[::-1]:
+            loc = diag_str[::-1].find(word_to_search)
+            return (s[1] - loc + 1, s[0] + loc + 1)
+    #search diagonally bottom left to top right
+    n = len(word_grid)
+    l = [x for x in range(1, n+1)] + [x for x in range(n-1, 0, -1)]
+    s = [0, n]
+    for i in range(len(l)):
+        if s[1] > 0:
+            s[1] -= 1
+        else:
+            s[0] += 1
+        diagonal_str = ""
+        temp = s.copy()
+        for x in range(l[i]):
+            diagonal_str += str(word_grid[temp[0]][temp[1]])
+            temp[0] += 1
+            temp[1] += 1  
+        if word_to_search in diagonal_str:
+            loc = diagonal_str.find(word_to_search)
+            return (s[0] + loc + 1, s[1] + loc + 1)
+        if word_to_search in diagonal_str[::-1]:
+            loc = diagonal_str[::-1].find(word_to_search)
+            return (s[0] + l[i] - loc, s[1] + l[i] - loc)        
+        
+            
+    
+        
+
+#################### do not change anything below this line ###################
+
+if __name__ == "__main__":
+    main()
