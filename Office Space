@@ -1,0 +1,194 @@
+#  File: OfficeSpace.py
+ 
+#  Description: Given the dimensions of the office space and the employee's requested space, employees will be given spaces
+#               they want that are uncontested.
+ 
+ 
+# Input: a rectangle which is a tuple of 4 integers (x1, y1, x2, y2)
+# Output: an integer giving the area of the rectangle
+def area (rect):
+  length = rect[3]-rect[1]
+  width = rect[2]-rect[0]
+  return length*width
+ 
+# Input: two rectangles in the form of tuples of 4 integers
+# Output: a tuple of 4 integers denoting the overlapping rectangle.
+#         return (0, 0, 0, 0) if there is no overlap
+def overlap (rect1, rect2):
+  if(rect2[0] < rect1[0] < rect2[2] or rect2[0] < rect1[2] < rect2[2]) and (rect2[1] < rect1[1] < rect2[3] or rect2[1] < rect1[3] < rect2[3]):
+    if(rect2[0] < rect1[0] < rect2[2]):
+      if(rect2[1] < rect1[1] < rect2[3]):
+        return tuple([rect1[0], rect1[1], rect2[2], rect2[3]])
+      else:
+        return tuple([rect1[0], rect2[1], rect2[2], rect1[3]])
+    else:
+      if(rect2[1] < rect1[1] < rect2[3]):
+        return tuple([rect2[0], rect1[1], rect1[2], rect2[3]])
+      else:
+        return tuple([rect2[0], rect2[1], rect1[2], rect1[3]])
+  elif (rect1[0] < rect2[0] and rect1[1] < rect2[1]) and (rect1[2] > rect2[2] and rect1[3] > rect2[3]):
+    return tuple([rect2[0], rect2[1], rect2[2], rect2[3]])
+  elif (rect2[0] < rect1[0] and rect2[1] < rect1[1]) and (rect2[2] > rect1[2] and rect2[3] > rect1[3]):
+    return tuple([rect1[0], rect1[1], rect1[2], rect1[3]])
+  else:
+    return tuple([0,0,0,0])
+ 
+# Input: x and y are integers that represent the dimensions of the building
+# Ouput: a 2D list full of 0s that represent available space in the building
+def building(x, y):
+  bldg = [[0 for i in range(x)] for j in range(y)]
+  return bldg
+ 
+ 
+# Input: bldg is a 2-D array representing the whole office space
+# Output: a single integer denoting the area of the unallocated
+#         space in the office
+def unallocated_space (bldg):
+  unallocated = 0
+  for r in range(len(bldg)):
+    for c in range(len(bldg[0])):
+      if bldg[r][c] == 0:
+        unallocated += 1
+  return unallocated
+ 
+# Input: bldg is a 2-D array representing the whole office space
+# Output: a single integer denoting the area of the contested
+#         space in the office
+def contested_space (bldg):
+  area = 0
+  for r in range(len(bldg)):
+    for c in range(len(bldg[0])):
+      if bldg[r][c] > 1:
+        area += 1
+  return area
+ 
+# Input: bldg is a 2-D array representing the whole office space
+#        rect is a rectangle in the form of a tuple of 4 integers
+#        representing the cubicle requested by an employee
+# Output: a single integer denoting the area of the uncontested
+#         space in the office that the employee gets
+def uncontested_space (bldg, rect):
+  employee_request = []
+  area = 0
+
+  # populate employee_request with the integers in the requested cells 
+  start_index_list = [len(bldg) - 1 - rect[3], rect[0]]
+  for r in range(rect[3] - rect[1]):
+    start_index_list[1] = rect[0]
+    employee_request_row = []
+    for c in range(rect[2] - rect[0]):
+      employee_request_row.append(bldg[start_index_list[0]][start_index_list[1]])
+      start_index_list[1] += 1
+    employee_request.append(employee_request_row)
+    start_index_list[0] += 1
+  
+  # calculate area of uncontested space within the requested space
+  for r in range(len(employee_request)):
+    for c in range(len(employee_request[0])):
+      if employee_request[r][c] == 1:
+        area += 1
+  return area
+
+  
+ 
+# Input: office is a rectangle in the form of a tuple of 4 integers
+#        representing the whole office space
+#        cubicles is a list of tuples of 4 integers representing all
+#        the requested cubicles
+# Output: a 2-D list of integers representing the office building and
+#         showing how many employees want each cell in the 2-D list
+def request_space (office, cubicles):
+  bldg = building(office[2], office[3])
+  for tup in cubicles:
+    start_cell = [len(bldg) - 1 - tup[3], tup[0]]
+    for r in range(tup[3] - tup[1]):
+      start_cell[1] = tup[0]
+      for c in range(tup[2] - tup[0]):
+        bldg[start_cell[0]][start_cell[1]] += 1
+        start_cell[1] += 1
+      start_cell[0] += 1
+  return bldg
+ 
+# Input: no input
+# Output: a string denoting all test cases have passed
+def test_cases ():
+  assert area ((0, 0, 1, 1)) == 1
+  #write your own test cases
+  assert overlap(tuple([1,5,7,11]), tuple([2,7,15,14])) == tuple([2,7,7,11])
+  worker_1_name = "Angela"
+  worker_1_coordinates = tuple([1,5,7,11])
+  worker_2_name = "Shree"
+  worker_2_coordinates = tuple([2,7,15,14])
+  list_of_workers = [worker_1_coordinates, worker_2_coordinates]
+  bldg = [[0 for i in range(30)] for j in range(30)]
+  office = tuple([0,0,30,30])
+  assert area (office) == 900
+  bldg = request_space(office, list_of_workers)
+  assert unallocated_space(bldg) == 793
+  assert contested_space(bldg) == 20
+  assert uncontested_space(bldg, worker_1_coordinates) == 16
+  assert uncontested_space(bldg, worker_2_coordinates) == 71
+  
+  return "all test cases passed"
+ 
+def main():
+  # read the data
+  import sys
+
+  # take the dimensions of the office space
+  dimensions = sys.stdin.readline().split()
+  x_dimension = int(dimensions[0])
+  y_dimension = int(dimensions[1])
+
+  # create a dictionary with the employee as the key and the requested space as the item
+  num_workers = int(sys.stdin.readline())
+  dict_1 = {}
+  for num in range(num_workers):
+    worker_1 = sys.stdin.readline().split()
+    worker_1_name = str(worker_1[0])
+    worker_1_coordinates = tuple([int(worker_1[1]), int(worker_1[2]), int(worker_1[3]), int(worker_1[4])])
+    dict_1[worker_1_name] = worker_1_coordinates
+ 
+  # run your test cases
+  #'''
+  #print (test_cases())
+  #'''
+ 
+  # print the following results after computation
+ 
+  # compute the total office space
+  print("Total " + str(area(tuple([0,0,x_dimension,y_dimension]))))
+ 
+  # find the overlaps between inputted workers and their areas
+  for key in dict_1.keys():
+    for k in dict_1.keys():
+      if k != key:
+        overlap(dict_1[key], dict_1[k])
+      else:
+        continue
+
+ # create a list with employee requested areas and a separate list with employee names
+  employee_coordinates = []
+  employee_names = []
+  for key in dict_1.keys():
+    employee_coordinates.append(dict_1[key])
+    employee_names.append(key)
+
+  # store the 2D array with mapped out requested areas into a 2D array variable
+  bldg = request_space(tuple([0,0,x_dimension, y_dimension]), employee_coordinates)
+  
+  # compute the total unallocated space
+  print('Unallocated', unallocated_space(bldg))
+
+  # compute the total contested space
+  print('Contested', contested_space(bldg))
+
+  # compute the uncontested space that each employee gets
+  index = 0
+  while index < len(employee_coordinates):
+    print(employee_names[index], uncontested_space(bldg, employee_coordinates[index]))
+    index += 1
+
+ 
+if __name__ == "__main__":
+  main()# your code goes here# your code goes here
